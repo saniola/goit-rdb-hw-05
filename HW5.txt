@@ -1,0 +1,46 @@
+// 1
+select order_details.*,
+	(select orders.customer_id  from orders where orders.id = order_details.order_id) AS customer_id
+from order_details;
+
+
+// 2
+select order_details.*
+from order_details
+where order_details.order_id in (select orders.id from orders where orders.shipper_id = 3)
+
+
+// 3
+select order_id, AVG(quantity) as avg_quantity
+from (select * from order_details where quantity > 10) as temp
+group by order_id;
+
+
+// 4
+WITH TemporalTable AS (
+    SELECT *
+    FROM order_details
+    WHERE quantity > 10
+)
+SELECT order_id, AVG(quantity) AS avg_quantity
+FROM TemporalTable
+GROUP BY order_id;
+
+
+// 5
+DROP FUNCTION IF EXISTS CalculateDividing;
+
+DELIMITER //
+CREATE FUNCTION CalculateDividing(first_number FLOAT, second_number FLOAT)
+RETURNS FLOAT
+DETERMINISTIC 
+NO SQL
+BEGIN
+    DECLARE result FLOAT;
+    SET result = first_number / second_number;
+    RETURN result;
+END //
+DELIMITER ;
+
+SELECT order_id, product_id, quantity, CalculateDividing(quantity, 5) AS divided_quantity
+FROM order_details;
